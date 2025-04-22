@@ -6,7 +6,8 @@ import { useToast } from '@/components/ui/use-toast';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  role: 'student' | 'admin' | null;
+  login: (email: string, password: string, role: 'student' | 'admin') => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -16,23 +17,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<'student' | 'admin' | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     // Check if user is already logged in
     const currentUser = authApi.getCurrentUser();
     setUser(currentUser);
+
+    // Load role from localStorage if exists
+    const savedRole = localStorage.getItem('userRole') as 'student' | 'admin' | null;
+    setRole(savedRole || null);
+
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, role: 'student' | 'admin') => {
     try {
       setLoading(true);
       const user = await authApi.login(email, password);
       setUser(user);
+      setRole(role);
+      localStorage.setItem('userRole', role);
       toast({
         title: "Login successful",
-        description: `Welcome back, ${user.username}!`,
+        description: `Welcome back, ${user.username} (${role})!`,
       });
     } catch (error) {
       console.error('Login failed:', error);
@@ -52,6 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       const user = await authApi.register(username, email, password);
       setUser(user);
+      setRole('student');
+      localStorage.setItem('userRole', 'student');
       toast({
         title: "Registration successful",
         description: `Welcome, ${user.username}!`,
@@ -73,6 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authApi.logout();
       setUser(null);
+      setRole(null);
+      localStorage.removeItem('userRole');
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
@@ -88,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, role, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -101,3 +114,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

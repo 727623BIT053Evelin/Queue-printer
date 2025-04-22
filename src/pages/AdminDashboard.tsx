@@ -43,6 +43,12 @@ const AdminDashboard: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>Admin Dashboard - Printing Queue</CardTitle>
+          <div className="mt-1 text-sm text-muted-foreground">
+            <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded mr-3">Admin-only</span>
+            <span className="bg-blue-50 text-blue-800 px-2 py-1 rounded">
+              <b>How to use 'Skip'?</b> Use <b>Skip</b> to move forward in the queue if a student is not physically present for confirmation (no show).
+            </span>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -118,3 +124,4 @@ const AdminDashboard: React.FC = () => {
 };
 
 export default AdminDashboard;
+

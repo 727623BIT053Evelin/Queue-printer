@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Printer, LogOut, User } from 'lucide-react';
 
 const NavBar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, role } = useAuth();
 
   return (
     <header className="border-b bg-white">
@@ -31,12 +31,19 @@ const NavBar: React.FC = () => {
           <Link to="/documents" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
             My Documents
           </Link>
+          {role === 'admin' && (
+            <Link to="/admin" className="text-sm font-medium text-amber-700 hover:text-primary transition-colors">
+              Admin Dashboard
+            </Link>
+          )}
         </nav>
         
         <div className="flex items-center space-x-3">
           {user ? (
             <div className="flex items-center space-x-3">
-              <span className="text-sm font-medium hidden md:inline-block">Hi, {user.username}</span>
+              <span className="text-sm font-medium hidden md:inline-block">
+                Hi, {user.username}{role && <> (<span className="capitalize">{role}</span>)</>}
+              </span>
               <Button variant="ghost" size="icon" onClick={() => logout()}>
                 <LogOut className="h-5 w-5" />
               </Button>
@@ -62,3 +69,4 @@ const NavBar: React.FC = () => {
 };
 
 export default NavBar;
+

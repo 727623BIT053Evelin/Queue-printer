@@ -10,6 +10,7 @@ import { Printer, Loader2 } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'student' | 'admin'>('student');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const { login, loading } = useAuth();
@@ -23,8 +24,12 @@ const LoginPage: React.FC = () => {
     }
     setEmailError('');
     try {
-      await login(email, password);
-      navigate('/documents');
+      await login(email, password, role);
+      if (role === "admin") {
+        navigate('/admin');
+      } else {
+        navigate('/documents');
+      }
     } catch (error) {
       // Error is handled in the Auth context with toast
     }
@@ -47,6 +52,31 @@ const LoginPage: React.FC = () => {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="role">Login as</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center space-x-1">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="student"
+                      checked={role === 'student'}
+                      onChange={() => setRole('student')}
+                    />
+                    <span>Student</span>
+                  </label>
+                  <label className="flex items-center space-x-1">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="admin"
+                      checked={role === 'admin'}
+                      onChange={() => setRole('admin')}
+                    />
+                    <span>Admin</span>
+                  </label>
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -106,3 +136,4 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
+
