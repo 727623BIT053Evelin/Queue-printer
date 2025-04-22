@@ -13,9 +13,11 @@ const AdminDashboard: React.FC = () => {
     setLoading(true);
     const allDocs = await documentApi.getAllDocuments?.();
     if (allDocs) {
-      setDocs(allDocs.filter(doc =>
-        (doc.status === "awaiting_confirmation" || doc.status === "pending")
-      ));
+      setDocs(
+        allDocs.filter(doc =>
+          doc.status === "awaiting_confirmation" || doc.status === "pending"
+        )
+      );
     }
     setLoading(false);
   };
@@ -57,6 +59,7 @@ const AdminDashboard: React.FC = () => {
                     <th className="py-2 px-2">Name</th>
                     <th className="py-2 px-2">User</th>
                     <th className="py-2 px-2">Pages</th>
+                    <th className="py-2 px-2">Details</th>
                     <th className="py-2 px-2">Status</th>
                     <th className="py-2 px-2">Actions</th>
                   </tr>
@@ -65,13 +68,24 @@ const AdminDashboard: React.FC = () => {
                   {docs.map((doc) => (
                     <tr key={doc.id} className="border-b">
                       <td className="py-2 px-2">{doc.name}</td>
-                      <td className="py-2 px-2 flex items-center"><User className="mr-1 h-4 w-4" />{doc.userId}</td>
+                      <td className="py-2 px-2 flex items-center">
+                        <User className="mr-1 h-4 w-4" /> {doc.userId}
+                      </td>
                       <td className="py-2 px-2">{doc.pages}</td>
                       <td className="py-2 px-2">
-                        {doc.status === "awaiting_confirmation" ? (
-                          <span className="text-amber-600">Awaiting Confirmation</span>
+                        {doc.printType === "single_side" ? "Single" : "Double"} /
+                        {doc.colorType === "color" ? "Color" : "B&W"} <br />
+                        {doc.paymentStatus === "paid" ? (
+                          <span className="text-green-600">Paid</span>
                         ) : (
-                          <span className="text-gray-500">{doc.status}</span>
+                          <span className="text-orange-600">To Pay</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-2">
+                        {doc.status === "awaiting_confirmation" ? (
+                          <span className="text-amber-600">Awaiting Conf.</span>
+                        ) : (
+                          <span className="text-gray-500 capitalize">{doc.status}</span>
                         )}
                       </td>
                       <td className="py-2 px-2 space-x-2">

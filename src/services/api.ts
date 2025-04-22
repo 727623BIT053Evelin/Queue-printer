@@ -59,6 +59,9 @@ const printPrices: PrintPrice = {
 // Auth API
 export const authApi = {
   register: async (username: string, email: string, password: string): Promise<User> => {
+    if (!/@mcet\.in$/.test(email)) {
+      throw new Error("Only mcet.in email addresses are allowed");
+    }
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -93,6 +96,9 @@ export const authApi = {
   },
   
   login: async (email: string, password: string): Promise<User> => {
+    if (!/@mcet\.in$/.test(email)) {
+      throw new Error("Only mcet.in email addresses are allowed");
+    }
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -148,11 +154,11 @@ export const documentApi = {
         throw new Error('You must be logged in to upload documents');
       }
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1200));
       
       // Random number of pages between 1-5
-      const pageCount = Math.floor(Math.random() * 5) + 1;
+      const pageCount = 1; // Optionally randomize if needed
       
       // Calculate payment amount based on print options and page count
       let paymentAmount = 0;
@@ -189,8 +195,8 @@ export const documentApi = {
       documents.push(newDocument);
       localStorage.setItem('documents', JSON.stringify(documents));
       
-      // Show success notification
-      toast.success("Document uploaded successfully");
+      if (isPaid) toast.success("Payment done. Document in paid queue!");
+      else toast.info("Pay at counter. Please be present for confirmation.");
       
       return newDocument;
     } catch (error) {
@@ -206,7 +212,7 @@ export const documentApi = {
       return [];
     }
     
-    // Simulate API call
+    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Filter documents by user

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import NavBar from '@/components/NavBar';
 import DocumentList from '@/components/DocumentList';
@@ -8,6 +7,7 @@ import { Upload, Bell, X } from 'lucide-react';
 import { documentApi, Document } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import QueueStatus from '@/components/QueueStatus';
 
 const DocumentsPage = () => {
   const [readyDocuments, setReadyDocuments] = useState<Document[]>([]);
@@ -78,6 +78,10 @@ const DocumentsPage = () => {
               Upload New
             </Button>
           </Link>
+        </div>
+        
+        <div className="mb-8">
+          <QueueStatus />
         </div>
         
         <DocumentList />
