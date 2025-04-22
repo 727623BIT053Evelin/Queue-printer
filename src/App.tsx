@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,7 @@ import QueuePage from "./pages/QueuePage";
 import UploadPage from "./pages/UploadPage";
 import DocumentsPage from "./pages/DocumentsPage";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +31,7 @@ const App = () => (
             <Route path="/queue" element={<QueuePage />} />
             <Route path="/upload" element={<UploadPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

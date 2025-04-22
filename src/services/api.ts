@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Base URL for our API
@@ -415,6 +414,14 @@ export const documentApi = {
   // Get print prices
   getPrintPrices: (): PrintPrice => {
     return printPrices;
+  },
+
+  // ADMIN ONLY: Get all documents, real-time (used in AdminDashboard)
+  getAllDocuments: async (): Promise<Document[]> => {
+    // Simulate API call delay
+    await new Promise((res) => setTimeout(res, 500));
+    const documents = JSON.parse(localStorage.getItem('documents') || '[]');
+    return documents.sort((a: Document, b: Document) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
 };
 
