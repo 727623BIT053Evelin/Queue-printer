@@ -3,15 +3,31 @@ import React, { useEffect, useState } from "react";
 import { documentApi, Document } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, User } from "lucide-react";
+import { Loader2, User, Clock3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+
+function formatCountdown(expiry: string) {
+  const end = new Date(expiry).getTime();
+  const now = Date.now();
+  const diff = end - now;
+  if (diff <= 0) return "Expired";
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return [
+    h > 0 ? String(h).padStart(2, "0") : "00",
+    String(m).padStart(2, "0"),
+    String(s).padStart(2, "0"),
+  ].join(":");
+}
 
 const AdminDashboard: React.FC = () => {
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<string[]>([]);
   const { role, user } = useAuth();
+  const [, setNow] = useState(Date.now()); // Dummy state to force interval re-render
 
   const fetchDocs = async () => {
     setLoading(true);
@@ -30,7 +46,13 @@ const AdminDashboard: React.FC = () => {
     if (role !== "admin") return;
     fetchDocs();
     const intervalId = setInterval(fetchDocs, 5000);
-    return () => clearInterval(intervalId);
+    const countdownInterval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => {
+      clearInterval(intervalId);
+      clearInterval(countdownInterval);
+    };
   }, [role]);
 
   const handleConfirm = async (docId: string) => {
@@ -43,10 +65,7 @@ const AdminDashboard: React.FC = () => {
         variant: "default"
       });
       
-      // Remove the document from the list immediately
       setDocs(docs.filter(doc => doc.id !== docId));
-      
-      // Also refresh the list after a short delay
       setTimeout(fetchDocs, 1000);
     } catch (error) {
       toast({
@@ -68,11 +87,7 @@ const AdminDashboard: React.FC = () => {
         description: "The document has been skipped and removed from the queue.",
         variant: "default"
       });
-      
-      // Remove the document from the list immediately
       setDocs(docs.filter(doc => doc.id !== docId));
-      
-      // Also refresh the list
       setTimeout(fetchDocs, 1000);
     } catch (error) {
       toast({
@@ -129,6 +144,7 @@ const AdminDashboard: React.FC = () => {
                     <th className="py-2 px-2">Pages</th>
                     <th className="py-2 px-2">Details</th>
                     <th className="py-2 px-2">Status</th>
+                    <th className="py-2 px-2">Confirm Until</th>
                     <th className="py-2 px-2">Actions</th>
                   </tr>
                 </thead>
@@ -156,6 +172,16 @@ const AdminDashboard: React.FC = () => {
                             <span className="text-amber-600">Awaiting Conf.</span>
                           ) : (
                             <span className="text-gray-500 capitalize">{doc.status}</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-2">
+                          {doc.status === "awaiting_confirmation" && doc.confirmationExpiry ? (
+                            <span className="flex items-center text-blue-700 font-mono">
+                              <Clock3 className="mr-1 h-4 w-4" />
+                              {formatCountdown(doc.confirmationExpiry)}
+                            </span>
+                          ) : (
+                            ""
                           )}
                         </td>
                         <td className="py-2 px-2 space-x-2">
@@ -223,3 +249,4 @@ const AdminDashboard: React.FC = () => {
 };
 
 export default AdminDashboard;
+
