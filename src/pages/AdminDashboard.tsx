@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 const AdminDashboard: React.FC = () => {
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processingIds, setProcessingIds] = useState<string[]>([]);
   const { role, user } = useAuth();
 
   const fetchDocs = async () => {
@@ -34,6 +35,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleConfirm = async (docId: string) => {
     try {
+      setProcessingIds(prev => [...prev, docId]);
       await documentApi.confirmPresence(docId);
       toast({
         title: "Document confirmed",
@@ -52,11 +54,14 @@ const AdminDashboard: React.FC = () => {
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive"
       });
+    } finally {
+      setProcessingIds(prev => prev.filter(id => id !== docId));
     }
   };
 
   const handleSkip = async (docId: string) => {
     try {
+      setProcessingIds(prev => [...prev, docId]);
       await documentApi.skipDocument(docId);
       toast({
         title: "Document skipped",
@@ -75,6 +80,8 @@ const AdminDashboard: React.FC = () => {
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive"
       });
+    } finally {
+      setProcessingIds(prev => prev.filter(id => id !== docId));
     }
   };
 
@@ -126,48 +133,85 @@ const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {docs.map((doc) => (
-                    <tr key={doc.id} className="border-b">
-                      <td className="py-2 px-2">{doc.name}</td>
-                      <td className="py-2 px-2 flex items-center">
-                        <User className="mr-1 h-4 w-4" /> {doc.userId}
-                      </td>
-                      <td className="py-2 px-2">{doc.pages}</td>
-                      <td className="py-2 px-2">
-                        {doc.printType === "single_side" ? "Single" : "Double"} /
-                        {doc.colorType === "color" ? "Color" : "B&W"} <br />
-                        {doc.paymentStatus === "paid" ? (
-                          <span className="text-green-600">Paid</span>
-                        ) : (
-                          <span className="text-orange-600">To Pay</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-2">
-                        {doc.status === "awaiting_confirmation" ? (
-                          <span className="text-amber-600">Awaiting Conf.</span>
-                        ) : (
-                          <span className="text-gray-500 capitalize">{doc.status}</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-2 space-x-2">
-                        {doc.status === "awaiting_confirmation" && (
-                          <>
-                            <Button size="sm" onClick={() => handleConfirm(doc.id)}>
-                              Confirm & Print
+                  {docs.map((doc) => {
+                    const isProcessing = processingIds.includes(doc.id);
+                    return (
+                      <tr key={doc.id} className="border-b">
+                        <td className="py-2 px-2">{doc.name}</td>
+                        <td className="py-2 px-2 flex items-center">
+                          <User className="mr-1 h-4 w-4" /> {doc.userId}
+                        </td>
+                        <td className="py-2 px-2">{doc.pages}</td>
+                        <td className="py-2 px-2">
+                          {doc.printType === "single_side" ? "Single" : "Double"} /
+                          {doc.colorType === "color" ? "Color" : "B&W"} <br />
+                          {doc.paymentStatus === "paid" ? (
+                            <span className="text-green-600">Paid</span>
+                          ) : (
+                            <span className="text-orange-600">To Pay</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-2">
+                          {doc.status === "awaiting_confirmation" ? (
+                            <span className="text-amber-600">Awaiting Conf.</span>
+                          ) : (
+                            <span className="text-gray-500 capitalize">{doc.status}</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-2 space-x-2">
+                          {doc.status === "awaiting_confirmation" && (
+                            <>
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleConfirm(doc.id)}
+                                disabled={isProcessing}
+                              >
+                                {isProcessing ? (
+                                  <>
+                                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  "Confirm & Print"
+                                )}
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive" 
+                                onClick={() => handleSkip(doc.id)}
+                                disabled={isProcessing}
+                              >
+                                {isProcessing ? (
+                                  <>
+                                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  "Skip"
+                                )}
+                              </Button>
+                            </>
+                          )}
+                          {doc.status === "pending" && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleConfirm(doc.id)}
+                              disabled={isProcessing}
+                            >
+                              {isProcessing ? (
+                                <>
+                                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                  Processing...
+                                </>
+                              ) : (
+                                "Mark as Present"
+                              )}
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleSkip(doc.id)}>
-                              Skip
-                            </Button>
-                          </>
-                        )}
-                        {doc.status === "pending" && (
-                          <Button size="sm" onClick={() => handleConfirm(doc.id)}>
-                            Mark as Present
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
