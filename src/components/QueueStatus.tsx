@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { documentApi, QueueStats } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { Clock, Users, Printer } from 'lucide-react';
+import { Clock, Users, Printer, AlertTriangle, HelpCircle, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const QueueStatus: React.FC = () => {
   const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
@@ -96,6 +97,48 @@ const QueueStatus: React.FC = () => {
               </p>
             </div>
           )}
+          
+          <div className="border p-4 rounded-lg mt-2 bg-amber-50 border-amber-200">
+            <div className="flex items-start">
+              <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium text-amber-800 mb-1">What to know before printing</h4>
+                <ul className="text-sm text-amber-700 space-y-1 list-disc pl-4">
+                  <li>You must be physically present to collect your print unless paid online</li>
+                  <li>You'll need to confirm your presence when your turn comes</li>
+                  <li>If you don't confirm within 5 minutes, your print will be skipped</li>
+                  <li>Payment can be made in person or online</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border p-4 rounded-lg mt-2 bg-gray-50">
+            <div className="flex items-start">
+              <Info className="h-5 w-5 text-gray-500 mt-0.5 mr-2 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium text-gray-700 mb-1">Pricing Information</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm mt-2">
+                  <div className="flex items-center justify-between bg-white p-2 rounded border">
+                    <span>B&W Single-sided:</span>
+                    <span className="font-medium">$0.50/page</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white p-2 rounded border">
+                    <span>B&W Double-sided:</span>
+                    <span className="font-medium">$0.75/page</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white p-2 rounded border">
+                    <span>Color Single-sided:</span>
+                    <span className="font-medium">$1.50/page</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white p-2 rounded border">
+                    <span>Color Double-sided:</span>
+                    <span className="font-medium">$2.00/page</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
           {!user && (
             <div className="bg-muted/50 p-4 rounded-lg mt-2">
