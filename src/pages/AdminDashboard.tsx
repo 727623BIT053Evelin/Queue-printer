@@ -1,11 +1,18 @@
-
 import React, { useEffect, useState } from "react";
 import { documentApi, Document } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, User, Clock3, Printer } from "lucide-react";
+import { Loader2, User, Clock3, Printer, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 function formatCountdown(expiry: string) {
   const end = new Date(expiry).getTime();
@@ -25,6 +32,11 @@ function formatCountdown(expiry: string) {
 function formatCreatedTime(createdAt: string) {
   const date = new Date(createdAt);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function getEstimatedPrintTime(queuePosition: number = 1): string {
+  const minutes = queuePosition * 2;
+  return `~${minutes} min${minutes !== 1 ? 's' : ''}`;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -73,6 +85,7 @@ const AdminDashboard: React.FC = () => {
       });
       
       setDocs(docs.filter(doc => doc.id !== docId));
+      
       setTimeout(fetchDocs, 1000);
     } catch (error) {
       toast({
@@ -107,12 +120,11 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Force print function for documents that may be stuck
   const handleForcePrint = async (docId: string) => {
     try {
       setProcessingIds(prev => [...prev, docId]);
-      // We're calling confirmPresence again to ensure the document is in the printing queue
       await documentApi.confirmPresence(docId);
+      documentApi.simulateQueueProgress();
       toast({
         title: "Print initiated",
         description: "The document has been sent to the printer.",
@@ -146,6 +158,14 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
+  const sortedDocs = [...docs].sort((a, b) => {
+    if (a.status === 'printing' && b.status !== 'printing') return -1;
+    if (a.status !== 'printing' && b.status === 'printing') return 1;
+    if (a.status === 'awaiting_confirmation' && b.status !== 'awaiting_confirmation') return -1;
+    if (a.status !== 'awaiting_confirmation' && b.status === 'awaiting_confirmation') return 1;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <Card>
@@ -155,6 +175,9 @@ const AdminDashboard: React.FC = () => {
             <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded mr-3">Admin-only</span>
             <span className="bg-blue-50 text-blue-800 px-2 py-1 rounded">
               <b>How to use 'Skip'?</b> Use <b>Skip</b> to move forward in the queue if a student is not physically present for confirmation (no show).
+            </span>
+            <span className="ml-3 bg-green-50 text-green-800 px-2 py-1 rounded">
+              <b>Print Time:</b> Each document takes approximately 2 minutes to print.
             </span>
           </div>
         </CardHeader>
@@ -167,30 +190,31 @@ const AdminDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr>
-                    <th className="py-2 px-2">Name</th>
-                    <th className="py-2 px-2">User</th>
-                    <th className="py-2 px-2">Pages</th>
-                    <th className="py-2 px-2">Details</th>
-                    <th className="py-2 px-2">Status</th>
-                    <th className="py-2 px-2">Confirm Until</th>
-                    <th className="py-2 px-2">Time Added</th>
-                    <th className="py-2 px-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {docs.map((doc) => {
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Pages</TableHead>
+                    <TableHead>Details</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Confirm Until</TableHead>
+                    <TableHead>Time Added</TableHead>
+                    <TableHead>Est. Print Time</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedDocs.map((doc, index) => {
                     const isProcessing = processingIds.includes(doc.id);
                     return (
-                      <tr key={doc.id} className="border-b">
-                        <td className="py-2 px-2">{doc.name}</td>
-                        <td className="py-2 px-2 flex items-center">
+                      <TableRow key={doc.id}>
+                        <TableCell>{doc.name}</TableCell>
+                        <TableCell className="flex items-center">
                           <User className="mr-1 h-4 w-4" /> {doc.userId}
-                        </td>
-                        <td className="py-2 px-2">{doc.pages}</td>
-                        <td className="py-2 px-2">
+                        </TableCell>
+                        <TableCell>{doc.pages}</TableCell>
+                        <TableCell>
                           {doc.printType === "single_side" ? "Single" : "Double"} /
                           {doc.colorType === "color" ? "Color" : "B&W"} <br />
                           {doc.paymentStatus === "paid" ? (
@@ -198,8 +222,8 @@ const AdminDashboard: React.FC = () => {
                           ) : (
                             <span className="text-orange-600">To Pay</span>
                           )}
-                        </td>
-                        <td className="py-2 px-2">
+                        </TableCell>
+                        <TableCell>
                           {doc.status === "awaiting_confirmation" ? (
                             <span className="text-amber-600">Awaiting Conf.</span>
                           ) : doc.status === "printing" ? (
@@ -209,8 +233,8 @@ const AdminDashboard: React.FC = () => {
                           ) : (
                             <span className="text-gray-500 capitalize">{doc.status}</span>
                           )}
-                        </td>
-                        <td className="py-2 px-2">
+                        </TableCell>
+                        <TableCell>
                           {doc.status === "awaiting_confirmation" && doc.confirmationExpiry ? (
                             <span className="flex items-center text-blue-700 font-mono">
                               <Clock3 className="mr-1 h-4 w-4" />
@@ -219,11 +243,22 @@ const AdminDashboard: React.FC = () => {
                           ) : (
                             ""
                           )}
-                        </td>
-                        <td className="py-2 px-2">
+                        </TableCell>
+                        <TableCell>
                           <span className="font-mono">{formatCreatedTime(doc.createdAt)}</span>
-                        </td>
-                        <td className="py-2 px-2 space-x-2">
+                        </TableCell>
+                        <TableCell>
+                          {doc.status === "pending" || doc.status === "awaiting_confirmation" ? (
+                            <span className="text-blue-600">
+                              {getEstimatedPrintTime(index + 1)}
+                            </span>
+                          ) : doc.status === "printing" ? (
+                            <span className="text-green-600">In progress</span>
+                          ) : (
+                            ""
+                          )}
+                        </TableCell>
+                        <TableCell className="space-x-2">
                           {doc.status === "awaiting_confirmation" && (
                             <>
                               <Button 
@@ -277,12 +312,12 @@ const AdminDashboard: React.FC = () => {
                               )}
                             </Button>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
