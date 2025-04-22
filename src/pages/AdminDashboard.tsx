@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { documentApi, Document } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, User, Clock3 } from "lucide-react";
+import { Loader2, User, Clock3, Printer } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
@@ -22,6 +22,11 @@ function formatCountdown(expiry: string) {
   ].join(":");
 }
 
+function formatCreatedTime(createdAt: string) {
+  const date = new Date(createdAt);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 const AdminDashboard: React.FC = () => {
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +40,9 @@ const AdminDashboard: React.FC = () => {
     if (allDocs) {
       setDocs(
         allDocs.filter(doc =>
-          doc.status === "awaiting_confirmation" || doc.status === "pending"
+          doc.status === "awaiting_confirmation" || 
+          doc.status === "pending" ||
+          doc.status === "printing"
         )
       );
     }
@@ -61,7 +68,7 @@ const AdminDashboard: React.FC = () => {
       await documentApi.confirmPresence(docId);
       toast({
         title: "Document confirmed",
-        description: "The document has been confirmed and will be printed.",
+        description: "The document has been confirmed and is now in the print queue.",
         variant: "default"
       });
       
@@ -92,6 +99,30 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       toast({
         title: "Skip failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingIds(prev => prev.filter(id => id !== docId));
+    }
+  };
+
+  // Force print function for documents that may be stuck
+  const handleForcePrint = async (docId: string) => {
+    try {
+      setProcessingIds(prev => [...prev, docId]);
+      // We're calling confirmPresence again to ensure the document is in the printing queue
+      await documentApi.confirmPresence(docId);
+      toast({
+        title: "Print initiated",
+        description: "The document has been sent to the printer.",
+        variant: "default"
+      });
+      setDocs(docs.filter(doc => doc.id !== docId));
+      setTimeout(fetchDocs, 1000);
+    } catch (error) {
+      toast({
+        title: "Print failed",
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive"
       });
@@ -132,7 +163,7 @@ const AdminDashboard: React.FC = () => {
             <div className="py-12 flex justify-center"><Loader2 className="animate-spin" /></div>
           ) : docs.length === 0 ? (
             <div className="text-center text-muted-foreground py-12">
-              No documents awaiting confirmation.
+              No documents awaiting confirmation or printing.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -145,6 +176,7 @@ const AdminDashboard: React.FC = () => {
                     <th className="py-2 px-2">Details</th>
                     <th className="py-2 px-2">Status</th>
                     <th className="py-2 px-2">Confirm Until</th>
+                    <th className="py-2 px-2">Time Added</th>
                     <th className="py-2 px-2">Actions</th>
                   </tr>
                 </thead>
@@ -170,6 +202,10 @@ const AdminDashboard: React.FC = () => {
                         <td className="py-2 px-2">
                           {doc.status === "awaiting_confirmation" ? (
                             <span className="text-amber-600">Awaiting Conf.</span>
+                          ) : doc.status === "printing" ? (
+                            <span className="text-blue-600 flex items-center">
+                              <Printer className="mr-1 h-4 w-4 animate-pulse" /> Printing...
+                            </span>
                           ) : (
                             <span className="text-gray-500 capitalize">{doc.status}</span>
                           )}
@@ -183,6 +219,9 @@ const AdminDashboard: React.FC = () => {
                           ) : (
                             ""
                           )}
+                        </td>
+                        <td className="py-2 px-2">
+                          <span className="font-mono">{formatCreatedTime(doc.createdAt)}</span>
                         </td>
                         <td className="py-2 px-2 space-x-2">
                           {doc.status === "awaiting_confirmation" && (
@@ -220,8 +259,9 @@ const AdminDashboard: React.FC = () => {
                           )}
                           {doc.status === "pending" && (
                             <Button 
-                              size="sm" 
-                              onClick={() => handleConfirm(doc.id)}
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleForcePrint(doc.id)}
                               disabled={isProcessing}
                             >
                               {isProcessing ? (
@@ -230,7 +270,10 @@ const AdminDashboard: React.FC = () => {
                                   Processing...
                                 </>
                               ) : (
-                                "Mark as Present"
+                                <>
+                                  <Printer className="mr-1 h-4 w-4" />
+                                  Print Now
+                                </>
                               )}
                             </Button>
                           )}
@@ -249,4 +292,3 @@ const AdminDashboard: React.FC = () => {
 };
 
 export default AdminDashboard;
-
