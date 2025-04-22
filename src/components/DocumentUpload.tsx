@@ -88,10 +88,25 @@ const DocumentUpload: React.FC = () => {
       }
       try {
         await documentApi.uploadDocument(o.file, o.printType, o.colorType, payNow);
-        if (payNow) toast.success("Payment successful! Document added to paid queue.");
-        else toast.info("Document uploaded! Please be present for printing or pay later.");
+        if (payNow) {
+          toast({
+            title: "Payment successful",
+            description: "Document added to paid queue.",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Document uploaded!",
+            description: "Please be present for printing or pay later.",
+            variant: "default",
+          });
+        }
       } catch (err) {
-        toast.error("Failed to upload " + o.file.name);
+        toast({
+          title: "Upload failed",
+          description: "Failed to upload " + o.file.name,
+          variant: "destructive",
+        });
       }
       setOptions((prev) =>
         prev.map((op, i) => (i === idx ? { ...op, paymentLoading: false } : op))

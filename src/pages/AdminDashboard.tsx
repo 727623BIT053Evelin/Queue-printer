@@ -4,10 +4,12 @@ import { documentApi, Document } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminDashboard: React.FC = () => {
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const { role, user } = useAuth();
 
   const fetchDocs = async () => {
     setLoading(true);
@@ -23,10 +25,11 @@ const AdminDashboard: React.FC = () => {
   };
 
   useEffect(() => {
+    if (role !== "admin") return;
     fetchDocs();
     const intervalId = setInterval(fetchDocs, 5000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [role]);
 
   const handleConfirm = async (docId: string) => {
     await documentApi.confirmPresence(docId);
@@ -37,6 +40,21 @@ const AdminDashboard: React.FC = () => {
     await documentApi.skipDocument(docId);
     fetchDocs();
   };
+
+  if (role !== "admin") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-xl font-semibold text-gray-600">
+        <Card>
+          <CardHeader>
+            <CardTitle>Forbidden</CardTitle>
+          </CardHeader>
+          <CardContent>
+            You are not authorized to view this page.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -124,4 +142,3 @@ const AdminDashboard: React.FC = () => {
 };
 
 export default AdminDashboard;
-

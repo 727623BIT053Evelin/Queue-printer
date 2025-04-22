@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRole(role);
       localStorage.setItem('userRole', role);
       toast({
-        title: "Login successful",
+        title: `Login successful`,
         description: `Welcome back, ${user.username} (${role})!`,
       });
     } catch (error) {
