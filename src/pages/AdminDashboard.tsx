@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 const AdminDashboard: React.FC = () => {
   const [docs, setDocs] = useState<Document[]>([]);
@@ -32,13 +33,49 @@ const AdminDashboard: React.FC = () => {
   }, [role]);
 
   const handleConfirm = async (docId: string) => {
-    await documentApi.confirmPresence(docId);
-    fetchDocs();
+    try {
+      await documentApi.confirmPresence(docId);
+      toast({
+        title: "Document confirmed",
+        description: "The document has been confirmed and will be printed.",
+        variant: "default"
+      });
+      
+      // Remove the document from the list immediately
+      setDocs(docs.filter(doc => doc.id !== docId));
+      
+      // Also refresh the list after a short delay
+      setTimeout(fetchDocs, 1000);
+    } catch (error) {
+      toast({
+        title: "Confirmation failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSkip = async (docId: string) => {
-    await documentApi.skipDocument(docId);
-    fetchDocs();
+    try {
+      await documentApi.skipDocument(docId);
+      toast({
+        title: "Document skipped",
+        description: "The document has been skipped and removed from the queue.",
+        variant: "default"
+      });
+      
+      // Remove the document from the list immediately
+      setDocs(docs.filter(doc => doc.id !== docId));
+      
+      // Also refresh the list
+      setTimeout(fetchDocs, 1000);
+    } catch (error) {
+      toast({
+        title: "Skip failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive"
+      });
+    }
   };
 
   if (role !== "admin") {

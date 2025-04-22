@@ -22,6 +22,7 @@ const LoginPage = () => {
       await login(email, password, role);
       toast({
         title: `Logged in as ${role}`,
+        description: "You have been successfully logged in.",
         variant: "default",
       });
       if (role === "admin") {
@@ -30,9 +31,10 @@ const LoginPage = () => {
         navigate("/");
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "",
+        description: error instanceof Error ? error.message : "Please check your credentials",
         variant: "destructive",
       });
     } finally {
