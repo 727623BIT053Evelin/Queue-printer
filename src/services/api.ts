@@ -428,7 +428,12 @@ export const documentApi = {
     await new Promise((res) => setTimeout(res, 500));
     const documents = JSON.parse(localStorage.getItem('documents') || '[]');
     return documents.sort((a: Document, b: Document) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }
+  },
+
+  clearAllDocuments: async (): Promise<void> => {
+    // Clear all documents from local storage
+    localStorage.setItem('documents', JSON.stringify([]));
+  },
 };
 
 // Start the queue simulation

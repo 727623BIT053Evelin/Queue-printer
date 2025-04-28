@@ -143,6 +143,13 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleReset = async () => {
+    await documentApi.clearAllDocuments(); // Clear all documents from local storage
+    setDocs([]); // Clear the document list in the state
+    setProcessingIds([]); // Clear any processing states
+    fetchDocs(); // Reload the documents
+  };
+
   if (role !== "admin") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-xl font-semibold text-gray-600">
@@ -180,6 +187,9 @@ const AdminDashboard: React.FC = () => {
               <b>Print Time:</b> Each document takes approximately 2 minutes to print.
             </span>
           </div>
+          <Button className="mt-4" variant="outline" onClick={handleReset}>
+            Reset Dashboard
+          </Button>
         </CardHeader>
         <CardContent>
           {loading ? (
